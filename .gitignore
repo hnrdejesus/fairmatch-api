@@ -1,24 +1,22 @@
-# --- Maven ---
+# Maven
 target/
 !.mvn/wrapper/maven-wrapper.jar
- 
-# --- IntelliJ IDEA ---
+
+# IntelliJ
 .idea/
-*.iws
 *.iml
-*.ipr
- 
-# --- Operational System ---
-.DS_Store
-Thumbs.db
- 
-#.env
+
+# VS Code
+.vscode/
+
+# Env
 .env
 *.env
- 
-# --- Logs ---
+
+# Logs
 *.log
 logs/
- 
-# --- Spring Boot fat jar ---
-*.jar
+
+# OS
+.DS_Store
+Thumbs.db
