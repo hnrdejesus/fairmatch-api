@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: baba-db
+    environment:
+      POSTGRES_DB: baba
+      POSTGRES_USER: baba
+      POSTGRES_PASSWORD: baba123
+    ports:
+      - "5432:5432"
+    volumes:
+      - baba_data:/var/lib/postgresql/data
+
+volumes:
+  baba_data:
