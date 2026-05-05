@@ -1,4 +1,4 @@
-package com.hnrdejesus.fairmatch_api;
+package com.hnrdejesus.fairmatch_api.player;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -55,7 +55,6 @@ class PlayerTest {
     @Test
     @DisplayName("Should return 100 when all attributes are at maximum")
     void shouldReturnMaxOverallWhenAllAttributesAreMax() {
-        // (100×2 + 100×2 + 100 + 100×2 + 100 + 100) / 9 = 900 / 9 = 100
         Player player = buildPlayer(100, 100, 100, 100, 100, 100);
 
         assertThat(player.getOverall()).isEqualTo(100);
@@ -66,7 +65,7 @@ class PlayerTest {
     void shouldReturnZeroOverallWhenAllAttributesAreZero() {
         Player player = buildPlayer(0, 0, 0, 0, 0, 0);
 
-        assertThat(player.getOverall()).isZero();
+        assertThat(player.getOverall()).isEqualTo(0);
     }
 
     @Test
@@ -74,13 +73,30 @@ class PlayerTest {
     void shouldWeightAttackingAttributesMoreThanDefensive() {
         // Validates the 2× weight decision: a player maxed on pace, shooting and dribbling
         // must outrate a player maxed on the remaining single-weight attributes.
-        // Player A (2× attributes): (100×2 + 100×2 + 0 + 100×2 + 0 + 0) / 9 = 66
-        Player playerA = buildPlayer(100, 100, 0, 100, 0, 0);
-
-        // Player B (1× attributes): (0×2 + 0×2 + 100 + 0×2 + 100 + 100) / 9 = 33
-        Player playerB = buildPlayer(0, 0, 100, 0, 100, 100);
+        Player playerA = buildPlayer(100, 100, 0, 100, 0, 0);  // 2× attributes: 600/9 = 66
+        Player playerB = buildPlayer(0, 0, 100, 0, 100, 100);  // 1× attributes: 300/9 = 33
 
         assertThat(playerA.getOverall()).isGreaterThan(playerB.getOverall());
+    }
+
+    // --- updateAttributes() ---
+
+    @Test
+    @DisplayName("Should recalculate overall immediately after updateAttributes")
+    void shouldRecalculateOverallAfterUpdateAttributes() {
+        Player player = buildPlayer(80, 80, 60, 80, 60, 60);
+        assertThat(player.getOverall()).isEqualTo(73);
+
+        PlayerRequest request = new PlayerRequest(
+                "Updated Player", 100, 100, 100, 100, 100, 100
+        );
+
+        // Verifies that the entity is never left inconsistent in memory —
+        // overall must reflect the new values before any JPA involvement.
+        player.updateAttributes(request);
+
+        assertThat(player.getOverall()).isEqualTo(100);
+        assertThat(player.getName()).isEqualTo("Updated Player");
     }
 
     // --- Bean Validation ---
@@ -94,11 +110,7 @@ class PlayerTest {
         Player player = Player.builder()
                 .name("Test Player")
                 .pace(null)
-                .shooting(80)
-                .passing(60)
-                .dribbling(80)
-                .defending(60)
-                .stamina(60)
+                .shooting(80).passing(60).dribbling(80).defending(60).stamina(60)
                 .overall(0)
                 .build();
 
@@ -108,16 +120,12 @@ class PlayerTest {
     }
 
     @Test
-    @DisplayName("Should fail validation when attribute is above 100")
-    void shouldFailValidationWhenAttributeIsAboveMax() {
+    @DisplayName("Should fail validation when attribute exceeds maximum")
+    void shouldFailValidationWhenAttributeExceedsMax() {
         Player player = Player.builder()
                 .name("Test Player")
                 .pace(101)
-                .shooting(80)
-                .passing(60)
-                .dribbling(80)
-                .defending(60)
-                .stamina(60)
+                .shooting(80).passing(60).dribbling(80).defending(60).stamina(60)
                 .overall(0)
                 .build();
 

@@ -1,4 +1,4 @@
-package com.hnrdejesus.fairmatch_api;
+package com.hnrdejesus.fairmatch_api.player;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -26,9 +26,11 @@ public class Player {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // unique = true enforces name uniqueness at the database level — the second line of
+    // defense against race conditions that the Service-layer check cannot prevent alone.
     @NotBlank(message = "Name is required")
     @Size(max = 100, message = "Name must have at most 100 characters")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String name;
 
     // FIFA-style attributes — rated on a 0 to 100 scale.
@@ -85,5 +87,23 @@ public class Player {
     public void calculateOverall() {
         this.overall = (pace * 2 + shooting * 2 + passing
                 + dribbling * 2 + defending + stamina) / 9;
+    }
+
+    /**
+     * Applies a full attribute update and immediately recalculates overall.
+     *
+     * <p>Centralizing mutation here ensures the entity is never left in an
+     * inconsistent in-memory state between the update call and the JPA flush.
+     * It also keeps the Service free of field-level knowledge about the entity.
+     */
+    public void updateAttributes(PlayerRequest request) {
+        this.name = request.name();
+        this.pace = request.pace();
+        this.shooting = request.shooting();
+        this.passing = request.passing();
+        this.dribbling = request.dribbling();
+        this.defending = request.defending();
+        this.stamina = request.stamina();
+        calculateOverall();
     }
 }
