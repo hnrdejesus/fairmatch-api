@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -13,15 +14,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Slice test — loads only the web layer (Controller + GlobalExceptionHandler).
-// The Service is mocked, so no database or full application context is needed.
+import com.hnrdejesus.fairmatch_api.shared.GlobalExceptionHandler;
+
+// @WebMvcTest loads only the web slice — GlobalExceptionHandler must be imported explicitly,
+// otherwise domain exceptions bypass the handler and surface as 500s in tests.
 @WebMvcTest(PlayerController.class)
+@Import(GlobalExceptionHandler.class)
 class PlayerControllerTest {
 
     // Single source of truth for the base URL — if the mapping changes, only this line needs updating.
@@ -71,8 +76,13 @@ class PlayerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.error").value("Validation failed"));
+                // Error responses use application/problem+json (RFC 7807), not application/json —
+                // signals to the client that this is a standardized error, not a data payload.
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Validation failed"))
+                // hasItem checks presence regardless of position — Bean Validation does not
+                // guarantee field order, so $.errors[0] would be fragile.
+                .andExpect(jsonPath("$.errors", hasItem("pace: Pace is required")));
     }
 
     @Test
@@ -85,8 +95,8 @@ class PlayerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isConflict())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Player with name 'Cris' already exists"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Player with name 'Cris' already exists"));
     }
 
     @Test
@@ -134,8 +144,9 @@ class PlayerControllerTest {
 
         mockMvc.perform(get(BASE_URL + "/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Player not found with id: 99"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Player not found with id: 99"))
+                .andExpect(jsonPath("$.title").value("Not Found"));
     }
 
     @Test
@@ -163,7 +174,8 @@ class PlayerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Player not found with id: 99"));
     }
 
     @Test
@@ -185,6 +197,7 @@ class PlayerControllerTest {
 
         mockMvc.perform(delete(BASE_URL + "/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Player not found with id: 99"));
     }
 }
