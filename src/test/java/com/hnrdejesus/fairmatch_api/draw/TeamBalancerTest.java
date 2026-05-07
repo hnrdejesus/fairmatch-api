@@ -1,5 +1,6 @@
 package com.hnrdejesus.fairmatch_api.draw;
 
+import com.hnrdejesus.fairmatch_api.factory.PlayerFactory;
 import com.hnrdejesus.fairmatch_api.player.PlayerResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,20 +20,20 @@ class TeamBalancerTest {
         balancer = new TeamBalancer();
     }
 
-    // Only overall matters to the algorithm — other attributes are zeroed out to keep tests focused.
-    private PlayerResponse player(Long id, String name, int overall) {
-        return new PlayerResponse(id, name, 0, 0, 0, 0, 0, 0, overall);
-    }
-
     @Test
     @DisplayName("Should split 10 players into two teams of 5")
     void shouldSplit10PlayersIntoTeamsOf5() {
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 80), player(2L, "B", 75),
-                player(3L, "C", 70), player(4L, "D", 65),
-                player(5L, "E", 60), player(6L, "F", 55),
-                player(7L, "G", 50), player(8L, "H", 45),
-                player(9L, "I", 40), player(10L, "J", 35)
+                PlayerFactory.createResponseWithOverall(1L, "A", 80),
+                PlayerFactory.createResponseWithOverall(2L, "B", 75),
+                PlayerFactory.createResponseWithOverall(3L, "C", 70),
+                PlayerFactory.createResponseWithOverall(4L, "D", 65),
+                PlayerFactory.createResponseWithOverall(5L, "E", 60),
+                PlayerFactory.createResponseWithOverall(6L, "F", 55),
+                PlayerFactory.createResponseWithOverall(7L, "G", 50),
+                PlayerFactory.createResponseWithOverall(8L, "H", 45),
+                PlayerFactory.createResponseWithOverall(9L, "I", 40),
+                PlayerFactory.createResponseWithOverall(10L, "J", 35)
         );
 
         DrawResult result = balancer.balance(players);
@@ -45,13 +46,20 @@ class TeamBalancerTest {
     @DisplayName("Should split 14 players into two teams of 7")
     void shouldSplit14PlayersIntoTeamsOf7() {
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 90),  player(2L, "B", 85),
-                player(3L, "C", 80),  player(4L, "D", 75),
-                player(5L, "E", 70),  player(6L, "F", 65),
-                player(7L, "G", 60),  player(8L, "H", 55),
-                player(9L, "I", 50),  player(10L, "J", 45),
-                player(11L, "K", 40), player(12L, "L", 35),
-                player(13L, "M", 30), player(14L, "N", 25)
+                PlayerFactory.createResponseWithOverall(1L, "A", 90),
+                PlayerFactory.createResponseWithOverall(2L, "B", 85),
+                PlayerFactory.createResponseWithOverall(3L, "C", 80),
+                PlayerFactory.createResponseWithOverall(4L, "D", 75),
+                PlayerFactory.createResponseWithOverall(5L, "E", 70),
+                PlayerFactory.createResponseWithOverall(6L, "F", 65),
+                PlayerFactory.createResponseWithOverall(7L, "G", 60),
+                PlayerFactory.createResponseWithOverall(8L, "H", 55),
+                PlayerFactory.createResponseWithOverall(9L, "I", 50),
+                PlayerFactory.createResponseWithOverall(10L, "J", 45),
+                PlayerFactory.createResponseWithOverall(11L, "K", 40),
+                PlayerFactory.createResponseWithOverall(12L, "L", 35),
+                PlayerFactory.createResponseWithOverall(13L, "M", 30),
+                PlayerFactory.createResponseWithOverall(14L, "N", 25)
         );
 
         DrawResult result = balancer.balance(players);
@@ -65,10 +73,10 @@ class TeamBalancerTest {
     void shouldAchieveZeroDifferenceWhenPossible() {
         // Total = 200 — optimal split: [100, 0] vs [90, 10] → equal sums of 100
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 100),
-                player(2L, "B", 90),
-                player(3L, "C", 10),
-                player(4L, "D", 0)
+                PlayerFactory.createResponseWithOverall(1L, "A", 100),
+                PlayerFactory.createResponseWithOverall(2L, "B", 90),
+                PlayerFactory.createResponseWithOverall(3L, "C", 10),
+                PlayerFactory.createResponseWithOverall(4L, "D", 0)
         );
 
         DrawResult result = balancer.balance(players);
@@ -83,10 +91,10 @@ class TeamBalancerTest {
         // Greedy (interleave by rank): [10, 8] vs [9, 1] → difference 8
         // Backtracking optimum:        [10, 1] vs [9, 8] → difference 6
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 10),
-                player(2L, "B", 9),
-                player(3L, "C", 8),
-                player(4L, "D", 1)
+                PlayerFactory.createResponseWithOverall(1L, "A", 10),
+                PlayerFactory.createResponseWithOverall(2L, "B", 9),
+                PlayerFactory.createResponseWithOverall(3L, "C", 8),
+                PlayerFactory.createResponseWithOverall(4L, "D", 1)
         );
 
         DrawResult result = balancer.balance(players);
@@ -98,11 +106,16 @@ class TeamBalancerTest {
     @DisplayName("Should produce most balanced teams with 10 uneven players")
     void shouldProduceMostBalancedTeamsWith10Players() {
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 95), player(2L, "B", 88),
-                player(3L, "C", 82), player(4L, "D", 76),
-                player(5L, "E", 71), player(6L, "F", 65),
-                player(7L, "G", 59), player(8L, "H", 52),
-                player(9L, "I", 44), player(10L, "J", 38)
+                PlayerFactory.createResponseWithOverall(1L, "A", 95),
+                PlayerFactory.createResponseWithOverall(2L, "B", 88),
+                PlayerFactory.createResponseWithOverall(3L, "C", 82),
+                PlayerFactory.createResponseWithOverall(4L, "D", 76),
+                PlayerFactory.createResponseWithOverall(5L, "E", 71),
+                PlayerFactory.createResponseWithOverall(6L, "F", 65),
+                PlayerFactory.createResponseWithOverall(7L, "G", 59),
+                PlayerFactory.createResponseWithOverall(8L, "H", 52),
+                PlayerFactory.createResponseWithOverall(9L, "I", 44),
+                PlayerFactory.createResponseWithOverall(10L, "J", 38)
         );
 
         DrawResult result = balancer.balance(players);
@@ -121,16 +134,16 @@ class TeamBalancerTest {
         // actually produced the smallest difference, the algorithm would do so — and would be correct.
         // For realistic rating distributions this test is solid.
         List<PlayerResponse> players = List.of(
-                player(1L, "Craque1", 95),
-                player(2L, "Craque2", 88),
-                player(3L, "Craque3", 82),
-                player(4L, "D", 70),
-                player(5L, "E", 65),
-                player(6L, "F", 60),
-                player(7L, "G", 55),
-                player(8L, "H", 50),
-                player(9L, "I", 45),
-                player(10L, "J", 40)
+                PlayerFactory.createResponseWithOverall(1L, "Craque1", 95),
+                PlayerFactory.createResponseWithOverall(2L, "Craque2", 88),
+                PlayerFactory.createResponseWithOverall(3L, "Craque3", 82),
+                PlayerFactory.createResponseWithOverall(4L, "D", 70),
+                PlayerFactory.createResponseWithOverall(5L, "E", 65),
+                PlayerFactory.createResponseWithOverall(6L, "F", 60),
+                PlayerFactory.createResponseWithOverall(7L, "G", 55),
+                PlayerFactory.createResponseWithOverall(8L, "H", 50),
+                PlayerFactory.createResponseWithOverall(9L, "I", 45),
+                PlayerFactory.createResponseWithOverall(10L, "J", 40)
         );
 
         DrawResult result = balancer.balance(players);
@@ -155,11 +168,16 @@ class TeamBalancerTest {
     @DisplayName("Should include all players in the result — no duplicates, no missing")
     void shouldIncludeAllPlayersInResult() {
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 80), player(2L, "B", 75),
-                player(3L, "C", 70), player(4L, "D", 65),
-                player(5L, "E", 60), player(6L, "F", 55),
-                player(7L, "G", 50), player(8L, "H", 45),
-                player(9L, "I", 40), player(10L, "J", 35)
+                PlayerFactory.createResponseWithOverall(1L, "A", 80),
+                PlayerFactory.createResponseWithOverall(2L, "B", 75),
+                PlayerFactory.createResponseWithOverall(3L, "C", 70),
+                PlayerFactory.createResponseWithOverall(4L, "D", 65),
+                PlayerFactory.createResponseWithOverall(5L, "E", 60),
+                PlayerFactory.createResponseWithOverall(6L, "F", 55),
+                PlayerFactory.createResponseWithOverall(7L, "G", 50),
+                PlayerFactory.createResponseWithOverall(8L, "H", 45),
+                PlayerFactory.createResponseWithOverall(9L, "I", 40),
+                PlayerFactory.createResponseWithOverall(10L, "J", 35)
         );
 
         DrawResult result = balancer.balance(players);
@@ -178,10 +196,10 @@ class TeamBalancerTest {
     @DisplayName("Should report correct overall sums for each team")
     void shouldReportCorrectOverallSums() {
         List<PlayerResponse> players = List.of(
-                player(1L, "A", 100),
-                player(2L, "B", 90),
-                player(3L, "C", 10),
-                player(4L, "D", 0)
+                PlayerFactory.createResponseWithOverall(1L, "A", 100),
+                PlayerFactory.createResponseWithOverall(2L, "B", 90),
+                PlayerFactory.createResponseWithOverall(3L, "C", 10),
+                PlayerFactory.createResponseWithOverall(4L, "D", 0)
         );
 
         DrawResult result = balancer.balance(players);
