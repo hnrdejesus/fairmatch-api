@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: baba
       POSTGRES_PASSWORD: baba123
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - baba_data:/var/lib/postgresql/data
 
